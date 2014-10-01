@@ -1,0 +1,8 @@
+scenario3;1
+wait;5
+takeoff;5.0
+led;5.0;1;1.0;4
+led;5.0;0;1.0;4
+led;5.0;2;1.0;4
+land;5.0
+end

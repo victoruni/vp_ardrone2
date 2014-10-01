@@ -1,0 +1,7 @@
+scenario2
+start;5
+takeoff;6.0
+hover;5.0
+land;5.0
+end
+

@@ -1,0 +1,198 @@
+<html>
+<head>
+<script type="text/javascript" src='ros.js'></script>
+<script type="text/javascript" src='options.js'></script>
+<script type="text/javascript">
+
+//var ipcomps=new Array("","192.168.0.102","192.168.0.103","192.168.0.8","192.168.0.105");
+var ipcomps=new Array("","localhost","192.168.0.103","192.168.0.8","192.168.0.105");
+var con1 = new Bridge("ws://"+ipcomps[1]+":9090");
+var con2 = new Bridge("ws://"+ipcomps[2]+":9090");
+var con3 = new Bridge("ws://"+ipcomps[3]+":9090");
+var con4 = new Bridge("ws://"+ipcomps[4]+":9090");
+
+// ******** ARDRONE1 ***************
+con1.onOpen=function()
+  {
+  var cback1=function(msg1) {JSON.stringify(msg1),get_ros(1,msg1);}
+    con1.subscribe(cback1,'/ardrone/navdata','ardrone_autonomy/Navdata');
+  var cback2=function(msg2) {JSON.stringify(msg2),get_ros(11,msg2);}
+    con1.subscribe(cback2,'/web_subscriber','std_msgs/String');
+  con1.advertise('/web_publisher', 'std_msgs/String');	
+  con1.advertise('/web_publisher2', 'std_msgs/Empty');	
+  get_scenario(1,"list");
+  }
+// ******** ARDRONE2 ***************
+con2.onOpen=function()
+  {
+  var cback1=function(msg1) {JSON.stringify(msg1),get_ros(2,msg1);}
+    con2.subscribe(cback1,'/ardrone/navdata','ardrone_autonomy/Navdata');
+  var cback2=function(msg2) {JSON.stringify(msg2),get_ros(12,msg2);}
+    con2.subscribe(cback2,'/web_subscriber','std_msgs/String');
+  con2.advertise('/web_publisher', 'std_msgs/String');	
+  con2.advertise('/web_publisher2', 'std_msgs/Empty');	
+  get_scenario(2,"list");
+  }
+
+// ******** ARDRONE3 ***************
+con3.onOpen=function()
+  {
+  var cback1=function(msg1) {JSON.stringify(msg1),get_ros(3,msg1);}
+    con3.subscribe(cback1,'/ardrone/navdata','ardrone_autonomy/Navdata');
+  var cback2=function(msg2) {JSON.stringify(msg2),get_ros(13,msg2);}
+    con3.subscribe(cback2,'/web_subscriber','std_msgs/String');
+  con3.advertise('/web_publisher', 'std_msgs/String');	
+  con3.advertise('/web_publisher2', 'std_msgs/Empty');	
+  get_scenario(3,"list");
+  }
+// ******** ARDRONE4 ***************
+con4.onOpen=function()
+  {
+  var cback1=function(msg1) {JSON.stringify(msg1),get_ros(4,msg1);}
+    con4.subscribe(cback1,'/ardrone/navdata','ardrone_autonomy/Navdata');
+  var cback2=function(msg2) {JSON.stringify(msg2),get_ros(14,msg2);}
+    con4.subscribe(cback2,'/web_subscriber','std_msgs/String');
+  con4.advertise('/web_publisher', 'std_msgs/String');	
+  con4.advertise('/web_publisher2', 'std_msgs/Empty');	
+  get_scenario(4,"list");
+  }
+
+
+
+</script>
+
+</head>
+<body>
+<h2 id="start">The dance of Ardrone 2.0</h2>
+<h3 id="">Табло (просмотр-выполнение сценариев)</h3>
+    <form id=formoptions name=formoptions action="javascript:void();" onsubmit="feturn false;">
+    <table width=100%><tr>
+      <!--  Ardrone1 -->
+      <td width=25% class="tdall"> 1 - Ardrone
+        <input type=checkbox id=check1 name=check1>
+        <br> ip компьютера
+          <span name=ip1 id=ip1></span> 
+        <br> Выбор сценария
+          <select name=choice_scenario1 id=choice_scenario1 onchange='get_scenario(11,this.value)'>
+            <option value="no" selected>
+          </select>
+        <br> Статус 
+           <span id="ready1"> Unknown </span>
+        <br> Батарея
+           <span id="battery1"> - </span>
+        <br> rotZ 
+           <span id="rotZ1"> 0 </span>
+        <br> altd
+           <span id="altd1"> 0 </span>
+        <br> Список команд <br>
+           <select name=view_scenario1 id=view_scenario1>
+           </select>
+        <br> 
+          <button id='button1' onclick='stop_ardrone(1)'>Остановить</button><br>
+      </td>
+      <!--  Ardrone2 -->
+      <td width=25% class="tdall"> 2 - Ardrone
+        <input type=checkbox id=check2 name=check2>
+        <br> ip компьютера
+          <span name=ip2 id=ip2></span> 
+        <br> Выбор сценария
+          <select name=choice_scenario2 id=choice_scenario2 onchange='get_scenario(12,this.value)'>
+            <option value="no" selected>
+          </select>
+        <br> Статус 
+           <span id="ready2"> Unknown </span>
+        <br> Батарея
+           <span id="battery2"> - </span>
+        <br> rotZ 
+           <span id="rotZ2"> 0 </span>
+        <br> altd
+           <span id="altd2"> 0 </span>
+        <br> Список команд <br>
+           <select name=view_scenario2 id=view_scenario2>
+           </select>
+        <br> 
+          <button id='button2' onclick='stop_ardrone(2)'>Остановить</button><br>
+      </td>      
+      <!--  Ardrone3 -->
+      <td width=25% class="tdall"> 3 - Ardrone
+        <input type=checkbox id=check3 name=check3>
+        <br> ip компьютера
+          <span name=ip3 id=ip3></span> 
+        <br> Выбор сценария
+          <select name=choice_scenario3 id=choice_scenario3 onchange='get_scenario(13,this.value)'>
+            <option value="no" selected>
+          </select>
+        <br> Статус 
+           <span id="ready3"> Unknown </span>
+        <br> Батарея
+           <span id="battery3"> - </span>
+        <br> rotZ 
+           <span id="rotZ3"> 0 </span>
+        <br> altd
+           <span id="altd3"> 0 </span>
+        <br> Список команд <br>
+           <select name=view_scenario3 id=view_scenario3>
+           </select>
+        <br> 
+          <button id='button3' onclick='stop_ardrone(3)'>Остановить</button><br>
+      </td>      
+      <!--  Ardrone4 -->
+      <td width=25% class="tdall"> 4 - Ardrone
+        <input type=checkbox id=check4 name=check4>
+        <br> ip компьютера
+          <span name=ip4 id=ip4></span> 
+        <br> Выбор сценария
+          <select name=choice_scenario4 id=choice_scenario4 onchange='get_scenario(14,this.value)'>
+            <option value="no" selected>
+          </select>
+        <br> Статус 
+           <span id="ready4"> Unknown </span>
+        <br> Батарея
+           <span id="battery4"> - </span>
+        <br> rotZ 
+           <span id="rotZ4"> 0 </span>
+        <br> altd
+           <span id="altd4"> 0 </span>
+        <br> Список команд <br>
+           <select name=view_scenario4 id=view_scenario4>
+           </select>
+        <br> 
+          <button id='button4' onclick='stop_ardrone(4)'>Остановить</button><br>
+      </td>
+
+    </tr>
+    </table>
+    <center><br>
+    <audio id=audio1 controls ><source src="music1.mp3"></audio>
+    <br>
+    <button id='button_takeoff_all' onclick="start_ros(0,'/ardrone/takeoff');">takeoff_all</button>
+    <button id='button_send' onclick="start_ros(1,'/web_publisher');"> -------- Запуск --------</button>
+    <button id='button_land_all' onclick="start_ros(0,'/ardrone/land');">land_all</button><br>
+    <br> Камера
+    <select name=choice_camera id=choice_camera onchange='new_camera(this.value)'>
+    </select>
+    <br>
+    </form>
+<img id=camera_ardrone src="http://192.168.0.8:8080/stream?topic=/image_"><br>
+<script> 
+  var select_camera=document.getElementById("choice_camera");
+  var opt;
+  for(var i=1;i<5;i++)
+    {
+    document.getElementById("ip"+i).innerHTML=ipcomps[i];
+    opt=document.createElement("option");
+    opt.value=ipcomps[i];
+    opt.innerHTML=ipcomps[i];
+    select_camera.appendChild(opt);    
+    }
+  document.getElementById("camera_ardrone").src="http://"+ipcomps[1]+":8080/stream?topic=/image_topic_2";
+function new_camera(arg)
+  {
+  alert(arg);
+  document.getElementById("camera_ardrone").src="http://"+arg+":8080/stream?topic=/ardrone/front/image_raw";
+  }
+</script>
+
+</center>
+</body>
+</html>

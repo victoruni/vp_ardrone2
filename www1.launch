@@ -1,0 +1,13 @@
+<launch>
+  <node name="rosbridge_server" pkg="rosbridge_server" type="rosbridge.py" >
+    <param name="io_method" value="mmap"/>
+  </node>
+  <node name="mjpeg_server" pkg="mjpeg_server" type="mjpeg_server" >
+  </node>
+  <node name="vp_ardrone2_get_scenario_server" pkg="vp_ardrone2" type="vp_ardrone2_get_scenario_server.py" >
+  </node>
+  <node name="web_publisher_node2" pkg="vp_ardrone2" type="vp_ardrone2_run_stopdrone.py" >
+  </node>
+  <node name="" pkg="roswww" type="webserver.py" >
+  </node>
+</launch>

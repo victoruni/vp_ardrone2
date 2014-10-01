@@ -1,0 +1,131 @@
+<html>
+<head>
+<script type="text/javascript" src='ros.js'></script>
+<script type="text/javascript" src='options.js'></script>
+<script type="text/javascript">
+
+var ipcomps=new Array("","192.168.0.8","192.168.0.22","192.168.0.104","192.168.0.105");
+var con1 = new Bridge("ws://"+ipcomps[1]+":9090");
+var con2 = new Bridge("ws://"+ipcomps[1]+":9090");
+var con3 = new Bridge("ws://"+ipcomps[1]+":9090");
+var con4 = new Bridge("ws://"+ipcomps[1]+":9090");
+
+// получение данных
+var get_ros1=function(msg)
+  {
+  //alert(msg);
+  document.getElementById("getdata1").value=msg;
+  }
+var get_ros_service1=function(msg,nn)
+  {
+  alert(msg);alert(nn);
+  //document.getElementById("getdata1").value=msg;
+  }
+var get_scenario=function(nn,msg)
+  {
+  alert(msg);
+  var cback11=function(msg1) {JSON.stringify(msg1),get_ros_service1(msg1.answer,nn);}
+  var outarr=new Array();outarr[0]=msg;
+  con1.callService(cback11,'/vp_ardrone2_get_scenario',outarr);
+  }
+
+con1.onOpen=function()
+  {
+  var cback1=function(msg1) {JSON.stringify(msg1),get_ros1(msg1[0]);}
+    con1.subscribe(cback1,'/web_subscriber1','std_msgs/String');
+  con1.advertise('/web_publisher1', 'std_msgs/String');	
+  }
+//  отправка
+function send_ros1() {
+  //alert(document.getElementById("putdata1").value);
+  con1.publish('/web_publisher1', {'data':document.getElementById("putdata1").value});
+  }
+// получение данных
+var get_ros2=function(msg)
+  {
+  //alert(msg);
+  document.getElementById("getdata2").value=msg;
+  }
+
+con2.onOpen=function()
+  {
+  var cback2=function(msg2) {JSON.stringify(msg2),get_ros2(msg2.data);}
+    con2.subscribe(cback2,'/web_subscriber2','std_msgs/String');
+  con2.advertise('/web_publisher2', 'std_msgs/String');	
+  }
+//  отправка
+function send_ros2() {
+  //alert(document.getElementById("putdata2").value);
+  con2.publish('/web_publisher2', {'data':document.getElementById("putdata2").value});
+  con1.publish('/web_publisher1', {'data':document.getElementById("putdata2").value});
+  }
+
+// выбор камеры
+function new_camera(ip)
+  {
+  //alert(ip);
+  document.getElementById("camera_robot").src="http://"+ip+":8080/stream?topic=/usb_cam1/image_raw";
+  }
+
+
+</script>
+
+</head>
+<body onload="ini();">
+<h2 id="start">The dance of Ardrone 2.0</h2>
+<h3 id="">Табло (просмотр-выполнение сценариев)</h3>
+    <form id=formoptions name=formoptions action="javascript:void();" onsubmit="feturn false;">
+    <table width=100%><tr>
+      <!--  Ardrone1 -->
+      <td width=25% class="tdall"> 1 - Ardrone
+        <br> ip компьютера
+          <span name=ip1 id=ip1></span>
+        <br> Выбор сценария
+          <select name=choice_scenario1 id=choice_scenario1 onchange='get_scenario(1,this.value)'>
+            <option value="no" selected>
+            <option value="scenario1.txt"> сценарий1
+            <option value="scenario2.txt"> сценарий2
+            <option value="scenario3.txt"> сценарий3
+          </select>
+        <br> Статус Ardrone 2.0
+           <span id="ready1"></span>
+        <br> Батарея
+           <span id="battery1">Не подключен</span>
+        <br> Список команд <br>
+             <textarea name=scenario_list1 id=scenario_list1 rows=8 cols=25></textarea>
+        <br> Текущая команда 
+          <span name=tek_scena1 id=tek_scena1> </span>
+        <br> 
+          <button id='button1' onclick='stop_ardrone(1)'>Остановить</button><br>
+      </td>
+      <!--  Ardrone2 -->
+      <td width=25% class="tdall"> 2 - Ardrone
+        <br> ip компьютера
+          <span name=ip2 id=ip2></span>
+      </td>
+      <!--  Ardrone3 -->
+      <td width=25% class="tdall"> 3 - Ardrone
+        <br> ip компьютера
+          <span name=ip3 id=ip3></span>
+      </td>
+      <!--  Ardrone4 -->
+      <td width=25% class="tdall"> 4 - Ardrone
+        <br> ip компьютера
+          <span name=ip4 id=ip4></span>
+      </td>
+
+    </tr>
+    <table width=100%>
+    <br><br><br><br>
+    <button id='button_send' onclick='send_ros();'>Запуск</button><br>
+    <br><br> Камера
+    <select name=choice_camera id=choice_camera onchange='new_camera(this.value)'>
+      <option value="192.168.0.8" selected> 192.168.0.8
+      <option value="192.168.0.22"> 192.168.0.22
+    </select>
+
+    </form>
+<img id=camera_robot src="http://192.168.0.8:8080/stream?topic=/usb_cam1/image_raw"><br>
+
+</body>
+</html>

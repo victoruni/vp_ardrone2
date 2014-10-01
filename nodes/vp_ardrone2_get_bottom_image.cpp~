@@ -1,0 +1,161 @@
+#include <ros/ros.h>
+#include <image_transport/image_transport.h>
+#include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/image_encodings.h>
+#include <opencv2/imgproc/imgproc.hpp>
+#include <opencv2/highgui/highgui.hpp>
+
+namespace enc = sensor_msgs::image_encodings;
+
+static const char WINDOW[] = "Image window";
+
+class ImageConverter
+{
+  ros::NodeHandle nh_;
+  image_transport::ImageTransport it_;
+  image_transport::Subscriber image_sub_;
+  image_transport::Publisher image_pub_;
+  
+public:
+  ImageConverter()
+    : it_(nh_)
+  {
+    image_pub_ = it_.advertise("image_converter1", 1);
+    image_sub_ = it_.subscribe("ardrone/bottom/image_raw", 1, &ImageConverter::imageCb, this);
+    //image_sub_ = it_.subscribe("/usb_cam1/image_raw", 1, &ImageConverter::imageCb, this);
+
+    cv::namedWindow(WINDOW);
+  }
+
+  ~ImageConverter()
+  {
+    cv::destroyWindow(WINDOW);
+  }
+
+  void imageCb(const sensor_msgs::ImageConstPtr& msg)
+  {
+    cv::Mat img_in;
+    cv::Mat img_out;
+    cv::Mat img_hsv;
+    cv::Mat img_hue;
+    cv::Mat img_sat;
+    cv::Mat img_brig;
+    cv::Mat img_bin;
+    cv::Mat img_bin1;
+    cv::Mat img_bin2;
+    cv::Mat img_cntr;
+    cv::Mat img_rect;
+    IplImage *cv_input_;
+    IplImage* cv_input1;
+    cv::Mat img_r;
+    cv::Mat img_g;
+    cv::Mat img_b;
+    //IplImage* img_r;
+    //IplImage* img_g;
+    //IplImage* img_b;
+    IplImage cv_output_;
+    CvRect rect;
+    CvSeq* contours = 0;
+    CvMemStorage* storage = NULL;
+    cv_bridge::CvImagePtr cv_ptr;
+
+    try
+    {
+      cv_ptr = cv_bridge::toCvCopy(msg, enc::BGR8);
+    }
+    catch (cv_bridge::Exception& e)
+    {
+      ROS_ERROR("cv_bridge exception: %s", e.what());
+      return;
+    }
+
+    if (cv_ptr->image.rows > 60 && cv_ptr->image.cols > 60)
+      cv::circle(cv_ptr->image, cv::Point(50, 50), 10, CV_RGB(255,0,0));
+    
+    img_in = cv::Mat (cv_ptr->image).clone();
+    //
+    img_out = img_in.clone ();
+    // Convert Input image from BGR to HSV
+    cv::cvtColor (img_in, img_hsv, CV_BGR2HSV);
+    // Zero Matrices
+    img_hue = cv::Mat::zeros(img_hsv.rows, img_hsv.cols, CV_8U);
+    img_sat = cv::Mat::zeros(img_hsv.rows, img_hsv.cols, CV_8U);
+    img_brig = cv::Mat::zeros(img_hsv.rows, img_hsv.cols, CV_8U);
+    img_bin = cv::Mat::zeros(img_hsv.rows, img_hsv.cols, CV_8U);
+    img_bin1 = cv::Mat::zeros(img_hsv.rows, img_hsv.cols, CV_8U);
+    img_bin2 = cv::Mat::zeros(img_hsv.rows, img_hsv.cols, CV_8U);
+    img_cntr = cv::Mat::zeros(img_hsv.rows, img_hsv.cols, CV_8U);
+    //    
+    int from_to[] = { 0,0, 1,1, 2,2};
+    cv::Mat img_split[] = { img_hue, img_sat, img_brig};
+    cv::mixChannels(&img_in, 3,img_split,3,from_to,3);
+    
+   for(int i = 0; i < img_out.rows; i++)
+    {
+      for(int j = 0; j < img_out.cols; j++)
+      {
+        // The output pixel is white if the input pixel
+        // hue is orange and saturation is reasonable
+        if(img_hue.at<unsigned char>(i,j) > 30 &&
+           img_hue.at<unsigned char>(i,j) < 80 &&
+           img_sat.at<unsigned char>(i,j) > 50 &&
+           img_sat.brig<unsigned char>(i,j)>50) {
+          img_bin.at<unsigned char>(i,j) = 255;
+          img_bin1.at<unsigned char>(i,j) = 255;
+          img_bin2.at<unsigned char>(i,j) = 255;
+        } else {
+          img_bin.at<unsigned char>(i,j) = 0;
+          img_bin1.at<unsigned char>(i,j) = 0;
+          img_bin2.at<unsigned char>(i,j) = 0;
+          // Clear pixel blue output channel
+          img_out.at<unsigned char>(i,j*3+0) = 0;
+          // Clear pixel green output channel
+          img_out.at<unsigned char>(i,j*3+1) = 0;
+          // Clear pixel red output channel
+          img_out.at<unsigned char>(i,j*3+2) = 0;
+        }
+      }
+    }
+    cv::imshow ("binary image", img_bin);
+    //cv::findContours( img_bin, storage, &contours );
+    cv::Size strel_size;
+    strel_size.width = 3;
+    strel_size.height = 3;
+    cv::Mat strel = cv::getStructuringElement(cv::MORPH_ELLIPSE,strel_size);
+    cv::morphologyEx(img_bin,img_bin1,cv::MORPH_OPEN,strel,cv::Point(-1, -1),3);
+    //
+    cv::bitwise_not(img_bin1,img_bin1);
+    // Blur the image to improve detection
+    cv::GaussianBlur(img_bin1, img_bin1, cv::Size(7, 7), 2, 2 );
+
+    std::vector<cv::Vec3f> circles;
+    // Detect circles That have a radius between 20 and 400 that are a minimum of 70 pixels apart
+    cv::HoughCircles(img_bin1, circles, CV_HOUGH_GRADIENT, 1, 100, 140, 15, 30, 400 );
+
+    for( size_t i = 0; i < circles.size(); i++ )
+    {
+         // round the floats to an int
+         cv::Point center(cvRound(circles[i][0]), cvRound(circles[i][1]));
+         int radius = cvRound(circles[i][2]);
+         // draw the circle center
+         cv::circle( img_bin1, center, 3, cv::Scalar(0,255,0), -1, 8, 0 );
+         // draw the circle outline
+         cv::circle( img_bin1, center, radius+1, cv::Scalar(0,0,255), 2, 8, 0 );
+         // Debugging Output
+         ROS_INFO("x: %d y: %d r: %d",center.x,center.y, radius);
+    }
+    cv::imshow ("binary1 image", img_bin1);
+    //
+    cv::imshow(WINDOW, cv_ptr->image);
+    cv::waitKey(3);
+    image_pub_.publish(cv_ptr->toImageMsg());
+  }
+};
+
+int main(int argc, char** argv)
+{
+  ros::init(argc, argv, "image_converter1");
+  ImageConverter ic;
+  ros::spin();
+  return 0;
+}
